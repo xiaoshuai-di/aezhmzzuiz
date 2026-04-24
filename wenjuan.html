@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>大脑健康小测试 - 阿尔茨海默病早期筛查 (10题版)</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入图标库 Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#F5F7FA',
+                        warning: '#FF7D00',
+                        safe: '#00B42A',
+                        happy: '#FF677D',
+                        calm: '#4CD263'
+                    },
+                    fontFamily: {
+                        sans: ['PingFang SC', 'Microsoft YaHei', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 额外自定义滚动条和老年友好点按效果 */
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        .question-card {
+            transition: all 0.2s ease;
+        }
+        .option-label {
+            transition: all 0.2s;
+        }
+        .option-label:active {
+            transform: scale(0.98);
+        }
+        @media (max-width: 640px) {
+            .btn-big {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+                font-size: 1.1rem;
+            }
+            .option-label {
+                font-size: 1rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-secondary min-h-screen py-5 px-4 md:px-0">
+    <div class="max-w-3xl mx-auto">
+        <!-- 头部（游戏化标题+温馨提示） -->
+        <div class="text-center mb-7">
+            <div class="flex justify-center mb-3">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary text-3xl">
+                    <i class="fa fa-heartbeat"></i>
+                </div>
+            </div>
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 mb-2">
+                🧠 大脑健康小测试
+            </h1>
+            <p class="text-lg text-gray-600">轻松答题，了解您的认知状态</p>
+            <p class="text-sm text-gray-500 mt-2 bg-amber-50 inline-block px-3 py-1 rounded-full">⚠️ 本测试仅为科普参考，不具备医学诊断价值</p>
+        </div>
+
+        <!-- 测试进度条区域 -->
+        <div class="mb-6 bg-white p-4 rounded-xl shadow-sm">
+            <p class="text-lg text-gray-700 mb-2 text-center font-medium">📋 测试进度：<span id="progressText">0/2</span></p>
+            <div class="progress-bar h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div id="progressFill" class="progress-fill h-full bg-primary transition-all duration-300 w-0"></div>
+            </div>
+            <p class="text-xs text-gray-400 text-center mt-2">共10道认知小问题，耐心答完更准确</p>
+        </div>
+
+        <!-- 问卷表单（分两步：基本信息 + 10道题目） -->
+        <form id="dementiaForm" class="space-y-6">
+            <!-- 步骤1：基本信息 -->
+            <div id="step1" class="question-card bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="font-semibold text-xl text-gray-800 mb-4 flex items-center gap-2"><i class="fa fa-user-circle text-primary"></i> 第一步：填写基本信息</h3>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label class="text-lg text-gray-600 block mb-2">🧓 年龄</label>
+                        <input type="number" id="age" required placeholder="例如：68" class="w-full px-4 py-3 text-lg border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="text-lg text-gray-600 block mb-2">👤 性别</label>
+                        <select id="gender" required class="w-full px-4 py-3 text-lg border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white">
+                            <option value="">请选择</option>
+                            <option value="male">男</option>
+                            <option value="female">女</option>
+                        </select>
+                    </div>
+                    <div class="text-sm text-gray-400 bg-gray-50 p-3 rounded-lg">
+                        <i class="fa fa-info-circle"></i> 您的信息仅用于结果分析，匿名且保密
+                    </div>
+                </div>
+                <div class="flex justify-center mt-6">
+                    <button type="button" onclick="nextStep(2)" class="btn-big bg-primary text-white hover:bg-primary/90 px-8 py-4 text-xl rounded-lg shadow-md transition-all">
+                        开始答题 <i class="fa fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤2：全部10道题目 -->
+            <div id="step2" class="question-card hidden bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa fa-puzzle-piece text-primary text-2xl"></i>
+                    <h3 class="font-semibold text-xl text-gray-800">🧩 第二步：日常健康小问答</h3>
+                </div>
+                <p class="text-md text-gray-500 mb-5 text-center bg-gray-50 py-2 rounded-lg">📅 请根据近一个月实际情况选择「是」或「否」</p>
+                
+                <div class="space-y-5 max-h-[70vh] overflow-y-auto pr-1 pb-2" id="questionsContainer">
+                    <!-- 共计10题，题目顺序从q1到q10，每个题目带name qX -->
+                    <!-- 题目1 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">1. 经常忘记近期发生的事情，且事后难以回忆起来？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q1" value="1" required class="w-5 h-5"> <span class="text-lg">是</span></label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q1" value="0" class="w-5 h-5"> <span class="text-lg">否</span></label>
+                        </div>
+                    </div>
+                    <!-- 题目2 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">2. 经常忘记熟悉的人名、物品名称或常用词汇？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q2" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q2" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目3 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">3. 在熟悉的环境中（如家附近）也会迷路、分不清方向？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q3" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q3" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目4 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">4. 经常重复提问同一件事，或重复讲述相同的内容？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q4" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q4" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目5 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">5. 处理日常财务（如缴费、算账）时出现明显困难？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q5" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q5" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目6 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">6. 判断力下降，容易轻信虚假信息或做出不合理决定？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q6" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q6" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目7 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">7. 情绪、性格发生明显改变（如易怒、多疑、淡漠）？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q7" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q7" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 题目8 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">8. 日常活动、兴趣爱好的参与度明显下降？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q8" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q8" value="0"> 否</label>
+                        </div>
+                    </div>
+
+                    <!-- 新增问题9 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">9. 做饭、打扫卫生等家务活变得比过去困难，需要别人提醒或帮忙？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q9" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q9" value="0"> 否</label>
+                        </div>
+                    </div>
+                    <!-- 新增10 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">10. 使用遥控器、手机、洗衣机等日常电器时，经常搞不清操作步骤？</p>
+                        <div class="flex flex-wrap gap-5">
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q10" value="1" required> 是</label>
+                            <label class="option-label flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:bg-primary/10 cursor-pointer px-4"><input type="radio" name="q10" value="0"> 否</label>
+                        </div>
+                    </div>
+
+                    <!-- 新增动画 -->
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">11. 请画出12点的钟。</p>  
+                    </div>
+                    <video width="100%" autoplay loop muted>
+                    <source src="sp/huazhongbiao.mp4" type="video/mp4">
+                    </video>
+
+                    <div class="p-4 border border-gray-100 rounded-xl bg-gray-50/70 hover:bg-gray-100 transition">
+                        <p class="text-lg text-gray-800 font-medium mb-3">12. 请把相同颜色的杯子放在一起。</p>  
+                    </div>
+                    <video width="100%" autoplay loop muted>
+                    <source src="sp/zhaopengyou.mp4" type="video/mp4">
+                    </video>
+
+                    
+                    
+                    
+                </div>
+
+                <!-- 按钮区域：返回+提交 -->
+                <div class="flex justify-center gap-6 mt-8 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="prevStep(1)" class="btn-big bg-gray-200 text-gray-700 hover:bg-gray-300 px-6 py-3 text-lg rounded-lg shadow">
+                        <i class="fa fa-arrow-left mr-2"></i> 返回修改
+                    </button>
+                    <button type="submit" class="btn-big bg-primary text-white hover:bg-primary/90 px-7 py-3 text-lg rounded-lg shadow">
+                        完成测试 <i class="fa fa-check ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- 结果弹窗（游戏化风格，老年友好大字体） -->
+        <div id="resultModal" class="fixed top-0 left-0 w-full h-full bg-black/50 hidden justify-center items-center z-50 p-4" style="backdrop-filter: blur(2px);">
+            <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                <div class="flex justify-center mb-4">
+                    <div id="resultIcon" class="w-20 h-20 rounded-full flex items-center justify-center text-5xl bg-gray-100"></div>
+                </div>
+                <h3 id="resultTitle" class="text-2xl font-bold mb-3 text-center">测试完成！</h3>
+                <div id="resultContent" class="text-xl text-gray-700 text-center mb-5 leading-relaxed"></div>
+                <div id="achievement" class="py-3 px-3 bg-blue-50 rounded-xl mb-5 text-center text-gray-700">
+                    💡 健康小贴士：多动脑、多社交、管好三高，守护记忆更长久！
+                </div>
+                <button onclick="closeModal()" class="w-full py-3 text-xl bg-primary text-white rounded-xl hover:bg-primary/90 transition">
+                    我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 步骤管理: 1基本信息 2全部题目
+        let currentStep = 1;
+        const totalSteps = 2;
+        const totalQuestions = 10;  // 共10道题目
+
+        function updateProgress() {
+            let percent = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            if (currentStep === 1) {
+                document.getElementById('progressText').innerHTML = `1/${totalSteps} · 填写信息`;
+            } else {
+                document.getElementById('progressText').innerHTML = `2/${totalSteps} · 共${totalQuestions}题`;
+            }
+        }
+
+        window.nextStep = function(step) {
+            if (step === 2) {
+                let age = document.getElementById('age').value.trim();
+                let gender = document.getElementById('gender').value;
+                if (!age || !gender) {
+                    alert('🧓 请先填写完整的年龄和性别再开始答题～');
+                    return;
+                }
+                if (parseInt(age) < 18) {
+                    if (!confirm('您年龄较小，本测试主要针对中老年认知筛查，是否继续？')) return;
+                }
+            }
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            currentStep = step;
+            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.prevStep = function(step) {
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            currentStep = step;
+            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 提交计算结果
+        document.getElementById('dementiaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateResult();
+        });
+
+        function calculateResult() {
+            // 收集所有题目是否都选中
+            let unanswered = [];
+            for (let i = 1; i <= totalQuestions; i++) {
+                let radios = document.querySelectorAll(`input[name="q${i}"]:checked`);
+                if (radios.length === 0) {
+                    unanswered.push(i);
+                }
+            }
+            if (unanswered.length > 0) {
+                let firstFew = unanswered.slice(0, 5).join(',');
+                let msg = unanswered.length > 5 ? `${firstFew}...等${unanswered.length}题` : firstFew;
+                alert(`📢 还有第 ${msg} 道题没有回答，请全部答完再查看结果～`);
+                return;
+            }
+
+            // 计算总得分
+            let score = 0;
+            for (let i = 1; i <= totalQuestions; i++) {
+                let selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected) score += parseInt(selected.value);
+            }
+
+            // 获取年龄和性别（用于可选的个性化提示）
+            const age = parseInt(document.getElementById('age').value) || 0;
+            // 根据得分给出不同的结果
+            const resultModal = document.getElementById('resultModal');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            const resultIcon = document.getElementById('resultIcon');
+            
+            let title = "", content = "", icon = "", iconBg = "";
+            // 调整阈值：由10道题，满分10分，风险分层更细致（老年友好）
+            if (score >= 8) {
+                title = "⚠️ 需要关注大脑健康";
+                content = `您的得分为 ${score} 分（满分10分）<br><br>建议您近期在家人的陪同下前往正规医院的神经内科或记忆门诊做进一步评估。早检查、早安心！<br><span class="text-sm">💚 可尝试回忆训练和社交活动</span>`;
+                icon = "⚠️";
+                iconBg = "bg-orange-100 text-orange-600";
+            } else if (score >= 6) {
+                title = "😊 大脑状态中等，可积极预防";
+                content = `您的得分为 ${score} 分。<br><br>有一些小困扰别担心，多参加社交、玩益智游戏、控制好血压血糖，能有效保护记忆力！保持乐观心态。`;
+                icon = "🧩";
+                iconBg = "bg-yellow-100 text-yellow-600";
+            } else {
+                title = "🎉 大脑状态很棒！";
+                content = `您的得分为 ${score} 分。<br><br>恭喜您！目前认知状态维持得很好。继续保持健康饮食、规律作息和活跃社交，让大脑年轻态～`;
+                icon = "🌟";
+                iconBg = "bg-green-100 text-green-600";
+            }
+            // 针对高龄额外关怀小贴士
+            if (age >= 75 && score >= 6) {
+                content += "<br><br>❤️ 小提示：高龄长辈定期做认知评估是关爱自己的好习惯。";
+            }
+            
+            resultTitle.innerHTML = title;
+            resultContent.innerHTML = content;
+            resultIcon.innerHTML = icon;
+            resultIcon.className = `w-20 h-20 rounded-full flex items-center justify-center text-5xl ${iconBg}`;
+            
+            resultModal.style.display = 'flex';
+        }
+
+        window.closeModal = function() {
+            document.getElementById('resultModal').style.display = 'none';
+            // 重置整个表单，方便重新测试（不清空也可，但考虑到老年人可能想重测，重置回到初始）
+            document.getElementById('dementiaForm').reset();
+            // 回到第一步
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            currentStep = 1;
+            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 初始化进度
+        updateProgress();
+        
+        // 可选：语音友好提醒（静默，但保留可扩展）
+        if ('speechSynthesis' in window && false) { // 默认不自动朗读
+            // 如需要可开启
+        }
+    </script>
+</body>
+</html>
+```
